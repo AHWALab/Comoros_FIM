@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visualiseur des résultats FIM. Union des Comores</title>
+<meta name="description" content="Cartes probabilistes d'inondation pour les 55 communes des Comores, rétro-prévisions du 26 au 28 avril 2024 et du 4 au 7 mai 2025. Vraisemblance pluviale à quatre seuils de profondeur.">
+<link rel="alternate" hreflang="fr" href="../fr/">
+<link rel="alternate" hreflang="en" href="./">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1C8 1 3 7 3 10.2 3 13 5.2 15 8 15s5-2 5-4.8C13 7 8 1 8 1z' fill='%232b6ca3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/css/leaflet.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <div>
+      <h1>Visualiseur des résultats FIM</h1>
+      <p class="head-sub">Union des Comores : Grande Comore, Anjouan et Mohéli, 55 communes</p>
+    </div>
+    <div class="head-meta">
+      <span>Rétro-prévisions du 26 au 28 avril 2024 (72 cycles) et du 4 au 7 mai 2025 (96 cycles)</span>
+      <span>Cycles de prévision horaires, 50 membres StormLab et 10 membres STREAM-Sat chacun</span>
+      <span class="lang-switch">
+        <a href="../">Accueil</a>
+        <a href="../en/" onclick="location.href='../en/'+location.hash;return false;">English</a>
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="context-band">
+  <div class="wrap">
+    Vraisemblance que la profondeur d'inondation dépasse un seuil, calculée en appariant chaque membre de
+    l'ensemble à une bibliothèque de 200 scénarios d'inondation pluviale pré-simulés de sa commune (orages
+    RainyDay sur les modèles hydrodynamiques des îles, 30 m). Chaque commune du pays a sa propre bibliothèque ;
+    la carte montre côte à côte les communes de l'île choisie.
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="controls" aria-label="View controls">
+    <div class="ctl-group">
+      <span class="ctl-label">Événement</span>
+      <div class="seg" id="seg-event">
+        <button data-e="apr2024" class="on">26 au 28 avril 2024</button>
+        <button data-e="may2025">4 au 7 mai 2025</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Île</span>
+      <div class="seg" id="seg-island">
+        <button data-i="grande">Grande Comore</button>
+        <button data-i="anjouan" class="on">Anjouan</button>
+        <button data-i="moheli">Mohéli</button>
+      </div>
+      <button class="toggle" id="zoomisland" title="Recadrer sur l'île">Recadrer l'île</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Seuil de profondeur</span>
+      <div class="seg" id="seg-thr">
+        <button data-t="10cm">0.10 m</button>
+        <button data-t="30cm" class="on">0.30 m</button>
+        <button data-t="70cm">0.70 m</button>
+        <button data-t="100cm">1.00 m</button>
+      </div>
+      <button class="toggle" id="obtoggle" title="Masquer les pixels déjà en eau dans le scénario de référence">Hors lit seulement</button>
+      <button class="toggle on" id="tinttoggle" title="Teinter chaque commune selon la part de sa surface avec vraisemblance">Teinte de commune</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Cycle</span>
+      <button class="step" id="prev" title="Cycle précédent">&lt;</button>
+      <select id="cycsel" aria-label="Cycle de prévision"></select>
+      <button class="step" id="next" title="Cycle suivant">&gt;</button>
+      <button class="toggle" id="play">Lecture</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Fond de carte</span>
+      <div class="seg" id="seg-base"><button data-b="voyager" class="on">Plan</button><button data-b="positron">Clair</button><button data-b="sat">Satellite</button></div>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="map-col">
+      <div class="mapbox">
+        <div id="map"></div>
+        <div class="overlay-msg" id="overlaymsg"></div>
+      </div>
+      <div class="map-caption">Grille source 30,6 m, EPSG 5629 (modèles hydrodynamiques des îles), rendu en EPSG 3857.
+        Le rectangle en pointillés est l'emprise de la mosaïque de l'île ; les lignes en pointillés sont les limites
+        de communes (cliquer sur une commune pour la sélectionner). Les points blancs sont les impacts rapportés pour
+        l'événement dans le SIDS Flash Flood Compendium. Le fond de carte nécessite une connexion ; les couches de
+        vraisemblance fonctionnent hors ligne.</div>
+    </div>
+
+    <aside class="side">
+      <div class="cyc-head">
+        <h2 id="cyctitle"></h2>
+        <span class="badge" id="badge"></span>
+      </div>
+      <dl class="kv" id="kv"></dl>
+      <div class="tblwrap"><table class="st" id="sttable"></table></div>
+      <div class="legend" id="legend">
+        <span><i style="background:#8dc63f"></i>Très faible, moins de 20 pour cent</span>
+        <span><i style="background:#fff200"></i>Faible, 20 à 40 pour cent</span>
+        <span><i style="background:#f7941d"></i>Moyenne, 40 à 60 pour cent</span>
+        <span><i style="background:#ed1c24"></i>Élevée, plus de 60 pour cent</span>
+        <span><i class="k-rep"></i>Impact rapporté</span>
+        <span><i style="background:#6baed6;opacity:.6"></i>Teinte de commune : part de la commune avec vraisemblance (clair sous 0,5 pour cent, foncé au-delà de 4 pour cent)</span>
+      </div>
+      <p class="note">La vraisemblance en un pixel est la part des 50 membres StormLab dont le scénario apparié atteint
+        le seuil de profondeur en ce point. Une commune est déclenchée quand l'un des 60 runs (10 d'analyse, 50 de
+        prévision) dépasse 1,0 m3/s/km2 de débit unitaire dans sa fenêtre ; les communes calmes ne portent aucune
+        vraisemblance. « Hors lit seulement » retire les pixels déjà en eau dans le scénario de référence (le plus
+        sec) de chaque bibliothèque : ce qui reste se lit comme l'aléa au-delà de l'eau permanente. Les flèches du
+        clavier font défiler les cycles.</p>
+    </aside>
+  </main>
+
+  <section class="timeline">
+    <div class="tl-head">
+      <h3>Chronologie de l'événement</h3>
+      <span class="tl-key">
+        <i class="k-line"></i>débit unitaire maximal de l'île par cycle
+        <i class="k-trig"></i>seuil de déclenchement 1,0
+        <i class="k-cur"></i>cycle sélectionné
+      </span>
+    </div>
+    <div class="stripwrap">
+      <svg id="strip" role="img" aria-label="Débit unitaire maximal par cycle de prévision"></svg>
+      <div class="tooltip" id="tip" style="display:none"></div>
+    </div>
+    <div class="tl-cap">Heures en UTC. Cliquer sur la bande pour aller à ce cycle.</div>
+  </section>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <div>
+      <strong>AHWA Laboratory, The University of Iowa</strong><br>
+      Projet EWS-F, financé par l'OMM
+    </div>
+    <div class="foot-right">
+      Produit avec TITO et tito_utils.fim_utils.<br>
+      Démonstration en rétro-prévision. Ce n'est pas un produit d'alerte opérationnel.
+    </div>
+  </div>
+</footer>
+
+<script>
+window.FIM_BASE = "../";
+window.FIM_STRINGS = {
+  fixLabel: function (l) { return l.replace(" Apr ", " avr. ").replace(" May ", " mai "); },
+  fixName: function (n) { return n; },
+  dayLabel: function (c) { return parseInt(c.slice(6, 8), 10) + " " + ({ "04": "avril", "05": "mai" }[c.slice(4, 6)]); },
+  cycleWord: "Cycle du",
+  quietWord: "calme",
+  triggered: "déclenchée",
+  sitesTriggered: "communes déclenchées",
+  maxUqLower: "débit unitaire max",
+  kvIsland: "Île",
+  kvMaxUq: "Débit unitaire max",
+  kvRain: "Cumuls de pluie des membres",
+  kvMaxP: "Vraisemblance max",
+  kvPixels: "Pixels avec vraisemblance",
+  kvView: "Vue",
+  toWord: "à",
+  ofWord: "sur",
+  overbankLower: "hors lit seulement",
+  tblCommune: "Commune",
+  tblStatus: "État",
+  tblUq: "UQ max",
+  tblMaxP: "P max",
+  tblPixels: "Pixels",
+  tblShare: "Surface en eau",
+  layerMissing: "Couche indisponible pour ce cycle.",
+  reportedImpact: "Impact rapporté",
+  scaleWord: "Échelle",
+  infraWord: "Infrastructures",
+  dynamicsWord: "Dynamique",
+  reportSource: "SIDS Flash Flood Compendium",
+  play: "Lecture",
+  pause: "Pause"
+};
+</script>
+<script src="../assets/js/leaflet.js"></script>
+<script src="../assets/data/grid.js"></script>
+<script src="../assets/data/cycles_apr2024.js"></script>
+<script src="../assets/data/cycles_may2025.js"></script>
+<script src="../assets/data/communes.js"></script>
+<script src="../assets/data/reports.js"></script>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>

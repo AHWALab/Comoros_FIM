@@ -1,0 +1,99 @@
+/* Comoros FIM Results Viewer. Shared by the French and English portals. */
+:root{
+  --ink:#1b2733; --mute:#65727f; --line:#d8dee5; --bg:#ffffff; --panel:#f4f6f8;
+  --brand:#2b6ca3; --brandv:#1d4f78;
+  --c-vlow:#8dc63f; --c-low:#fff200; --c-med:#f7941d; --c-high:#ed1c24;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font:15px/1.5 "Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 18px}
+a{color:var(--brand)}
+h1,h2,h3{margin:0}
+
+.site-head{background:var(--brandv);color:#fff;padding:14px 0}
+.head-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:flex-end}
+.site-head h1{font-size:20px;font-weight:600;letter-spacing:.2px}
+.head-sub{margin:3px 0 0;font-size:13px;color:#c6dcef}
+.head-meta{font-size:12px;color:#c6dcef;text-align:right;display:flex;flex-direction:column;gap:2px}
+.lang-switch a{color:#fff;text-decoration:none;border:1px solid #4d84ae;border-radius:3px;padding:2px 8px;margin-left:6px;font-size:12px}
+.lang-switch a:hover{background:#4d84ae}
+
+.context-band{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 0;font-size:13px;color:var(--mute)}
+
+.controls{display:flex;flex-wrap:wrap;gap:16px 26px;padding:14px 0 10px;border-bottom:1px solid var(--line)}
+.ctl-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctl-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--brand);color:#fff}
+.seg button:disabled{color:#a9b3bd;cursor:not-allowed;background:#f7f9fb}
+.toggle,.step{border:1px solid var(--line);background:#fff;border-radius:4px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.toggle.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+select{border:1px solid var(--line);border-radius:4px;padding:6px 8px;font:inherit;font-size:13px;background:#fff;color:var(--ink)}
+
+.main{display:flex;gap:20px;flex-wrap:wrap;padding:16px 0}
+.map-col{flex:2 1 620px;min-width:320px}
+.mapbox{position:relative;border:1px solid var(--line);border-radius:4px;overflow:hidden;height:min(70vh,760px);background:#eef1f4}
+#map{position:absolute;inset:0}
+.overlay-msg{position:absolute;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:rgba(244,246,248,.93);text-align:center;padding:0 40px;color:var(--mute);font-size:15px}
+.overlay-msg.show{display:flex}
+.map-caption{font-size:11px;color:var(--mute);margin-top:6px;max-width:640px}
+
+.side{flex:1 1 320px;min-width:290px;max-width:470px}
+.cyc-head{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+.cyc-head h2{font-size:16px;font-weight:600}
+.badge{font-size:11px;border-radius:10px;padding:2px 9px;background:#e6f0f7;color:var(--brandv);border:1px solid #c6dcef}
+.badge.quiet{background:#f1f3f5;color:var(--mute);border-color:var(--line)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0 0 12px;font-size:13px}
+.kv dt{color:var(--mute)}
+.kv dd{margin:0}
+table.st{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px}
+table.st th,table.st td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:right}
+table.st th:first-child,table.st td:first-child{text-align:left}
+table.st thead th{color:var(--mute);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+table.st tr.na td{color:#a9b3bd}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;margin-bottom:10px}
+.legend i{display:inline-block;width:13px;height:13px;border-radius:2px;margin-right:5px;vertical-align:-2px;border:1px solid rgba(0,0,0,.15)}
+.note{font-size:12px;color:var(--mute);line-height:1.55}
+.warnbox{border:1px solid #e2c8a0;background:#fdf6ec;border-radius:4px;padding:9px 11px;font-size:12.5px;color:#7a5a24;margin-bottom:12px}
+
+.timeline{border-top:1px solid var(--line);padding:14px 0 26px}
+.tl-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px}
+.tl-head h3{font-size:14px;font-weight:600}
+.tl-key{font-size:11.5px;color:var(--mute);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.tl-key i{display:inline-block;margin-right:5px;vertical-align:1px}
+.k-line{width:16px;height:2px;background:var(--brand)}
+.k-trig{width:16px;height:0;border-top:2px dashed #c0392b}
+.k-cur{width:2px;height:12px;background:#111;vertical-align:-2px}
+.stripwrap{position:relative;margin-top:8px}
+#strip{width:100%;height:120px;display:block;cursor:pointer}
+.tooltip{position:absolute;background:#1b2733;color:#fff;font-size:11.5px;padding:4px 7px;border-radius:3px;pointer-events:none;white-space:nowrap;transform:translate(-50%,-130%)}
+.tl-cap{font-size:11px;color:var(--mute);margin-top:4px}
+
+.site-foot{border-top:1px solid var(--line);background:var(--panel);padding:16px 0;margin-top:10px}
+.foot-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.foot-right{text-align:right}
+
+.leaflet-container{background:#eef1f4}
+.leaflet-control-attribution{font-size:10px}
+@media (max-width:820px){
+  .head-meta,.foot-right{text-align:left}
+  .mapbox{height:56vh}
+}
+
+/* Comoros additions */
+table.st tr.sel td{background:#eaf2f9;font-weight:600}
+table.st tbody tr{cursor:pointer}
+table.st tbody tr:hover td{background:#f4f6f8}
+.tblwrap{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:4px;margin-bottom:12px}
+.tblwrap table.st{margin:0}
+.tblwrap table.st thead th{position:sticky;top:0;background:#fff}
+.leaflet-popup-content{font-size:12.5px;line-height:1.45}
+.leaflet-popup-content .src{color:var(--mute);font-size:11px}
+.leaflet-container a.leaflet-popup-close-button{font-size:16px}
+.ctl-group .seg button{padding:6px 10px}
+.k-rep{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid #111;background:#fff;vertical-align:-1px}
+table.st th,table.st td{white-space:nowrap}
+table.st td:first-child{white-space:normal}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIM Results Viewer. Union of the Comoros</title>
+<meta name="description" content="Probabilistic flood inundation maps for the 55 communes of the Comoros, hindcasts of 26 to 28 April 2024 and 4 to 7 May 2025. Pluvial likelihood at four depth thresholds.">
+<link rel="alternate" hreflang="fr" href="../fr/">
+<link rel="alternate" hreflang="en" href="./">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1C8 1 3 7 3 10.2 3 13 5.2 15 8 15s5-2 5-4.8C13 7 8 1 8 1z' fill='%232b6ca3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/css/leaflet.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap head-row">
+    <div>
+      <h1>FIM Results Viewer</h1>
+      <p class="head-sub">Union of the Comoros: Grande Comore, Anjouan and Moheli, 55 communes</p>
+    </div>
+    <div class="head-meta">
+      <span>Hindcasts of 26 to 28 April 2024 (72 cycles) and 4 to 7 May 2025 (96 cycles)</span>
+      <span>Hourly forecast cycles, 50 StormLab members and 10 STREAM-Sat members each</span>
+      <span class="lang-switch">
+        <a href="../">Home</a>
+        <a href="../fr/" onclick="location.href='../fr/'+location.hash;return false;">Fran&ccedil;ais</a>
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="context-band">
+  <div class="wrap">
+    Likelihood that the flood depth exceeds a threshold, computed by matching every ensemble member to a
+    library of 200 pre-simulated pluvial flood scenarios of its commune (RainyDay storms over the island
+    hydrodynamic models, 30 m). Every commune of the country has its own library; the map shows the
+    communes of the selected island side by side.
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="controls" aria-label="View controls">
+    <div class="ctl-group">
+      <span class="ctl-label">Event</span>
+      <div class="seg" id="seg-event">
+        <button data-e="apr2024" class="on">26 to 28 April 2024</button>
+        <button data-e="may2025">4 to 7 May 2025</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Island</span>
+      <div class="seg" id="seg-island">
+        <button data-i="grande">Grande Comore</button>
+        <button data-i="anjouan" class="on">Anjouan</button>
+        <button data-i="moheli">Moheli</button>
+      </div>
+      <button class="toggle" id="zoomisland" title="Zoom to the island">Zoom island</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Depth threshold</span>
+      <div class="seg" id="seg-thr">
+        <button data-t="10cm">0.10 m</button>
+        <button data-t="30cm" class="on">0.30 m</button>
+        <button data-t="70cm">0.70 m</button>
+        <button data-t="100cm">1.00 m</button>
+      </div>
+      <button class="toggle" id="obtoggle" title="Hide pixels that are wet in the reference scenario">Overbank only</button>
+      <button class="toggle on" id="tinttoggle" title="Tint each commune by the share of its area with likelihood">Commune tint</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Cycle</span>
+      <button class="step" id="prev" title="Previous cycle">&lt;</button>
+      <select id="cycsel" aria-label="Forecast cycle"></select>
+      <button class="step" id="next" title="Next cycle">&gt;</button>
+      <button class="toggle" id="play">Play</button>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Basemap</span>
+      <div class="seg" id="seg-base"><button data-b="voyager" class="on">Street</button><button data-b="positron">Light</button><button data-b="sat">Satellite</button></div>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="map-col">
+      <div class="mapbox">
+        <div id="map"></div>
+        <div class="overlay-msg" id="overlaymsg"></div>
+      </div>
+      <div class="map-caption">Source grid 30.6 m, EPSG 5629 (island hydrodynamic models), rendered in EPSG 3857.
+        The dashed rectangle is the extent of the island mosaic; dashed lines are the commune boundaries
+        (click a commune to select it). White dots are the impacts reported for the event in the SIDS Flash
+        Flood Compendium. The basemap needs a connection; the likelihood layers work offline.</div>
+    </div>
+
+    <aside class="side">
+      <div class="cyc-head">
+        <h2 id="cyctitle"></h2>
+        <span class="badge" id="badge"></span>
+      </div>
+      <dl class="kv" id="kv"></dl>
+      <div class="tblwrap"><table class="st" id="sttable"></table></div>
+      <div class="legend" id="legend">
+        <span><i style="background:#8dc63f"></i>Very low, under 20 percent</span>
+        <span><i style="background:#fff200"></i>Low, 20 to 40 percent</span>
+        <span><i style="background:#f7941d"></i>Medium, 40 to 60 percent</span>
+        <span><i style="background:#ed1c24"></i>High, over 60 percent</span>
+        <span><i class="k-rep"></i>Reported impact</span>
+        <span><i style="background:#6baed6;opacity:.6"></i>Commune tint: share of the commune with likelihood (light under 0.5 percent, dark over 4 percent)</span>
+      </div>
+      <p class="note">Likelihood at a pixel is the share of the 50 StormLab members whose matched scenario reaches the
+        depth threshold there. A commune is triggered when any of the 60 runs (10 analysis, 50 forecast) exceeds
+        1.0 m3/s/km2 of unit streamflow inside its window; quiet communes carry no likelihood. Overbank only removes
+        pixels that are already wet in the reference (driest) scenario of each library, so what remains reads as
+        hazard beyond the permanent water. Use the arrow keys to step through cycles.</p>
+    </aside>
+  </main>
+
+  <section class="timeline">
+    <div class="tl-head">
+      <h3>Event timeline</h3>
+      <span class="tl-key">
+        <i class="k-line"></i>island maximum unit streamflow per cycle
+        <i class="k-trig"></i>trigger 1.0
+        <i class="k-cur"></i>selected cycle
+      </span>
+    </div>
+    <div class="stripwrap">
+      <svg id="strip" role="img" aria-label="Maximum unit streamflow per forecast cycle"></svg>
+      <div class="tooltip" id="tip" style="display:none"></div>
+    </div>
+    <div class="tl-cap">Times are UTC. Click anywhere on the strip to jump to that cycle.</div>
+  </section>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <div>
+      <strong>AHWA Laboratory, The University of Iowa</strong><br>
+      EWS-F project, funded by the WMO
+    </div>
+    <div class="foot-right">
+      Produced with TITO and tito_utils.fim_utils.<br>
+      Hindcast demonstration. Not an operational warning product.
+    </div>
+  </div>
+</footer>
+
+<script>
+window.FIM_BASE = "../";
+window.FIM_STRINGS = {
+  fixLabel: function (l) { return l; },
+  fixName: function (n) { return n.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); },
+  dayLabel: function (c) { return parseInt(c.slice(6, 8), 10) + " " + ({ "04": "April", "05": "May" }[c.slice(4, 6)]); },
+  cycleWord: "Cycle",
+  quietWord: "quiet",
+  triggered: "triggered",
+  sitesTriggered: "communes triggered",
+  maxUqLower: "max unit streamflow",
+  kvIsland: "Island",
+  kvMaxUq: "Max unit streamflow",
+  kvRain: "Member rain totals",
+  kvMaxP: "Max likelihood",
+  kvPixels: "Pixels with likelihood",
+  kvView: "View",
+  toWord: "to",
+  ofWord: "of",
+  overbankLower: "overbank only",
+  tblCommune: "Commune",
+  tblStatus: "Status",
+  tblUq: "Max UQ",
+  tblMaxP: "Max P",
+  tblPixels: "Pixels",
+  tblShare: "Wet area",
+  layerMissing: "Layer not available for this cycle.",
+  reportedImpact: "Reported impact",
+  scaleWord: "Scale",
+  infraWord: "Infrastructure",
+  dynamicsWord: "Dynamics",
+  reportSource: "SIDS Flash Flood Compendium",
+  play: "Play",
+  pause: "Pause"
+};
+</script>
+<script src="../assets/js/leaflet.js"></script>
+<script src="../assets/data/grid.js"></script>
+<script src="../assets/data/cycles_apr2024.js"></script>
+<script src="../assets/data/cycles_may2025.js"></script>
+<script src="../assets/data/communes.js"></script>
+<script src="../assets/data/reports.js"></script>
+<script src="../assets/js/app.js"></script>
+</body>
+</html>
