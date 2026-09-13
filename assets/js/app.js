@@ -16,7 +16,7 @@ var OB_BIT = { "10cm": 1, "30cm": 2, "70cm": 4, "100cm": 8 };
 var N_MEMBERS = 50;
 var CLASS_RGB = [[141, 198, 63], [255, 242, 0], [247, 148, 29], [237, 28, 36]];
 
-var ev = "apr2024", island = "anjouan", thr = "30cm", variant = "raw", idx = 0, playing = null, currentBase = "voyager";
+var ev = "apr2024", island = "grande", thr = "30cm", variant = "raw", idx = 0, playing = null, currentBase = "voyager";
 var selectedCommune = null;
 var tint = true;
 function fixName(n) { return S.fixName ? S.fixName(n) : n; }
@@ -150,6 +150,7 @@ function readHash() {
   if (["voyager", "positron", "sat"].indexOf(h.get("b")) >= 0) { currentBase = h.get("b"); }
   var c = h.get("c");
   if (c) { cycles().forEach(function (x, k) { if (x.cycle === c) { idx = k; } }); }
+  else { cycles().forEach(function (x, k) { if (x.peak) { idx = k; } }); }
   if (h.get("u")) { selectedCommune = h.get("u"); }
   if (h.get("tint") === "0") { tint = false; }
 }
@@ -167,7 +168,7 @@ function writeHash() {
 var sel = document.getElementById("cycsel");
 function fillCycleSelect() {
   sel.innerHTML = "";
-  cycles().forEach(function (c, i) { var o = document.createElement("option"); o.value = i; o.textContent = S.fixLabel(c.label); sel.appendChild(o); });
+  cycles().forEach(function (c, i) { var o = document.createElement("option"); o.value = i; o.textContent = S.fixLabel(c.label) + (c.peak ? " *" : ""); sel.appendChild(o); });
 }
 sel.addEventListener("change", function () { idx = +sel.value; draw(); });
 document.getElementById("prev").addEventListener("click", function () { step(-1); });
